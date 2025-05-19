@@ -3,23 +3,24 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { TaskList } from './components/TaskList';
 import { useTasks } from './hooks/useTasks';
+import { useRecommendedTodos } from './hooks/useRecommendedTodos';
 import { Auth } from './components/Auth';
 import { ChatbotButton } from './components/Chatbot/ChatbotButton';
 import { ChatbotWindow } from './components/Chatbot/ChatbotWindow';
+import { RecommendedTodos } from './components/RecommendedTodos';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const { tasks, loading, error, addTask, toggleTaskCompletion, editTask, removeTask } = useTasks();
+  const { recommendations, handleThumbsUp, handleThumbsDown } = useRecommendedTodos();
   const [searchTerm, setSearchTerm] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -60,10 +61,14 @@ function App() {
         </div>
       </div>
 
+      <RecommendedTodos
+        recommendations={recommendations}
+        onThumbsUp={handleThumbsUp}
+        onThumbsDown={handleThumbsDown}
+      />
+      
       <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} isOpen={isChatOpen} />
       <ChatbotWindow isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }
-
-export default App;
