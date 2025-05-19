@@ -27,10 +27,8 @@ export function useRecommendedTodos() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user: {
-            id: session.user.id,
-            email: session.user.email,
-          }
+          id: session.user.id,
+          email: session.user.email,
         }),
       });
 
