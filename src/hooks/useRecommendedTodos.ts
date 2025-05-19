@@ -36,9 +36,14 @@ export function useRecommendedTodos() {
         throw new Error('Failed to fetch recommendations');
       }
 
-      const data = await response.json();
-      // Ensure data is always an array
-      setRecommendations(Array.isArray(data) ? data : []);
+      const { response: data } = await response.json();
+      // Transform the data to match our interface
+      const transformedData: RecommendedTodo[] = data.map((todo: { title: string; user_id: string }) => ({
+        id: crypto.randomUUID(), // Generate a client-side ID since the backend doesn't provide one
+        title: todo.title
+      }));
+      
+      setRecommendations(transformedData);
       setError(null);
     } catch (err) {
       setError('Failed to load recommendations');
