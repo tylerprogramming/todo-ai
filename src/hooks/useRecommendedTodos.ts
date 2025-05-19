@@ -39,15 +39,15 @@ export function useRecommendedTodos() {
       const data = await response.json();
       console.log('Raw response from backend:', data);
 
-      // Check if data.response exists and is an array
-      if (!data?.response || !Array.isArray(data.response)) {
+      // The response is in the format { response: Todo[] }
+      if (!data?.response) {
         console.warn('Unexpected data format from backend:', data);
         setRecommendations([]);
         return;
       }
 
       // Transform the data to match our interface
-      const transformedData: RecommendedTodo[] = data.response.map((todo: { title: string; user_id: string }) => ({
+      const transformedData: RecommendedTodo[] = data.response.map((todo: { title: string }) => ({
         id: crypto.randomUUID(), // Generate a client-side ID since the backend doesn't provide one
         title: todo.title
       }));
