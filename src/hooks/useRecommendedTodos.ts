@@ -36,18 +36,28 @@ export function useRecommendedTodos() {
         throw new Error('Failed to fetch recommendations');
       }
 
-      const { response: data } = await response.json();
+      const data = await response.json();
+      console.log('Raw response from backend:', data);
+
+      // Check if data.response exists and is an array
+      if (!data?.response || !Array.isArray(data.response)) {
+        console.warn('Unexpected data format from backend:', data);
+        setRecommendations([]);
+        return;
+      }
+
       // Transform the data to match our interface
-      const transformedData: RecommendedTodo[] = data.map((todo: { title: string; user_id: string }) => ({
+      const transformedData: RecommendedTodo[] = data.response.map((todo: { title: string; user_id: string }) => ({
         id: crypto.randomUUID(), // Generate a client-side ID since the backend doesn't provide one
         title: todo.title
       }));
       
+      console.log('Transformed recommendations:', transformedData);
       setRecommendations(transformedData);
       setError(null);
     } catch (err) {
       setError('Failed to load recommendations');
-      console.error(err);
+      console.error('Error fetching recommendations:', err);
     } finally {
       setLoading(false);
     }
