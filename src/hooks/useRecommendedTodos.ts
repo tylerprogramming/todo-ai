@@ -63,7 +63,7 @@ export function useRecommendedTodos() {
     }
   };
 
-  const handleThumbsUp = async (todo: RecommendedTodo) => {
+  const handleThumbsAction = async (todo: RecommendedTodo, action: 'up' | 'down') => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('User not authenticated');
@@ -74,8 +74,11 @@ export function useRecommendedTodos() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: todo.id,
-          action: 'up',
+          todo: {
+            id: todo.id,
+            title: todo.title,
+          },
+          action,
           user: {
             id: session.user.id,
             email: session.user.email,
@@ -84,56 +87,30 @@ export function useRecommendedTodos() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to process thumbs up');
+        throw new Error(`Failed to process thumbs ${action}`);
       }
 
-      // Add to todos
-      const { error: insertError } = await supabase
-        .from('todos')
-        .insert({
-          title: todo.title,
-          user_id: session.user.id
-        });
+      // If thumbs up, add to todos
+      if (action === 'up') {
+        const { error: insertError } = await supabase
+          .from('todos')
+          .insert({
+            title: todo.title,
+            user_id: session.user.id
+          });
 
-      if (insertError) throw insertError;
-
-      // Remove from recommendations locally
-      setRecommendations(prev => prev.filter(t => t.id !== todo.id));
-    } catch (err) {
-      console.error('Failed to process thumbs up:', err);
-    }
-  };
-
-  const handleThumbsDown = async (todo: RecommendedTodo) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('User not authenticated');
-
-      const response = await fetch(`${API_BASE_URL}/thumbs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: todo.id,
-          action: 'down',
-          user: {
-            id: session.user.id,
-            email: session.user.email,
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to process thumbs down');
+        if (insertError) throw insertError;
       }
 
       // Remove from recommendations locally
       setRecommendations(prev => prev.filter(t => t.id !== todo.id));
     } catch (err) {
-      console.error('Failed to process thumbs down:', err);
+      console.error(`Failed to process thumbs ${action}:`, err);
     }
   };
+
+  const handleThumbsUp = (todo: RecommendedTodo) => handleThumbsAction(todo, 'up');
+  const handleThumbsDown = (todo: RecommendedTodo) => handleThumbsAction(todo, 'down');
 
   useEffect(() => {
     fetchRecommendations();
