@@ -75,7 +75,7 @@ export function useRecommendedTodos() {
         },
         body: JSON.stringify({
           todo: {
-            user_id: todo.id,
+            id: todo.id,
             title: todo.title,
           },
           action,
