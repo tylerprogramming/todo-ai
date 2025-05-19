@@ -6,6 +6,8 @@ interface RecommendedTodo {
   title: string;
 }
 
+const API_BASE_URL = 'https://choice-entirely-coyote.ngrok-free.app';
+
 export function useRecommendedTodos() {
   const [recommendations, setRecommendations] = useState<RecommendedTodo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,14 +15,31 @@ export function useRecommendedTodos() {
 
   const fetchRecommendations = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('recommended_todos')
-        .select('id, title')
-        .order('created_at', { ascending: false });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setRecommendations([]);
+        return;
+      }
 
-      if (fetchError) throw fetchError;
-      
-      setRecommendations(data || []);
+      const response = await fetch(`${API_BASE_URL}/recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user: {
+            id: session.user.id,
+            email: session.user.email,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch recommendations');
+      }
+
+      const data = await response.json();
+      setRecommendations(data);
       setError(null);
     } catch (err) {
       setError('Failed to load recommendations');
@@ -32,20 +51,39 @@ export function useRecommendedTodos() {
 
   const handleThumbsUp = async (todo: RecommendedTodo) => {
     try {
-      // Add the recommended todo to the user's todos
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('User not authenticated');
 
+      const response = await fetch(`${API_BASE_URL}/thumbs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: todo.id,
+          action: 'up',
+          user: {
+            id: session.user.id,
+            email: session.user.email,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process thumbs up');
+      }
+
+      // Add to todos
       const { error: insertError } = await supabase
         .from('todos')
         .insert({
           title: todo.title,
-          user_id: user.id
+          user_id: session.user.id
         });
 
       if (insertError) throw insertError;
 
-      // Remove from recommendations
+      // Remove from recommendations locally
       setRecommendations(prev => prev.filter(t => t.id !== todo.id));
     } catch (err) {
       console.error('Failed to process thumbs up:', err);
@@ -54,14 +92,29 @@ export function useRecommendedTodos() {
 
   const handleThumbsDown = async (todo: RecommendedTodo) => {
     try {
-      // Simply remove from recommendations
-      const { error: deleteError } = await supabase
-        .from('recommended_todos')
-        .delete()
-        .eq('id', todo.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('User not authenticated');
 
-      if (deleteError) throw deleteError;
-      
+      const response = await fetch(`${API_BASE_URL}/thumbs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: todo.id,
+          action: 'down',
+          user: {
+            id: session.user.id,
+            email: session.user.email,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process thumbs down');
+      }
+
+      // Remove from recommendations locally
       setRecommendations(prev => prev.filter(t => t.id !== todo.id));
     } catch (err) {
       console.error('Failed to process thumbs down:', err);
