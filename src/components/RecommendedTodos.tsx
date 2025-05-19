@@ -13,7 +13,19 @@ interface RecommendedTodosProps {
 }
 
 export function RecommendedTodos({ recommendations, onThumbsUp, onThumbsDown }: RecommendedTodosProps) {
-  if (recommendations.length === 0) return null;
+  // Show empty state when there are no recommendations
+  if (!recommendations?.length) {
+    return (
+      <div className="fixed bottom-20 left-5 w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-blue-500 text-white px-4 py-2">
+          <h3 className="font-medium">Recommended Tasks</h3>
+        </div>
+        <div className="p-4 text-center text-gray-500">
+          No recommendations available
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-20 left-5 w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">

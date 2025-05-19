@@ -37,7 +37,8 @@ export function useRecommendedTodos() {
       }
 
       const data = await response.json();
-      setRecommendations(data);
+      // Ensure data is always an array
+      setRecommendations(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError('Failed to load recommendations');
