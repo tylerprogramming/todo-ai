@@ -45,3 +45,4 @@ export function RecommendedTodos({ recommendations, onThumbsUp, onThumbsDown }: 
       </div>
     </div>
   );
+}
