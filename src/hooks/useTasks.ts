@@ -31,7 +31,7 @@ export function useTasks() {
   useEffect(() => {
     loadTasks();
 
-    // Subscribe to auth changes to reload tasks when user signs in/out
+    // Listen for auth changes to reload tasks when user signs in/out
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
         loadTasks();
@@ -40,8 +40,13 @@ export function useTasks() {
       }
     });
 
+    // Listen for refresh-tasks event
+    const handleRefresh = () => loadTasks();
+    window.addEventListener('refresh-tasks', handleRefresh);
+
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener('refresh-tasks', handleRefresh);
     };
   }, [loadTasks]);
 

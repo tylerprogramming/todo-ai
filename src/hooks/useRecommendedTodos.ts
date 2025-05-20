@@ -37,22 +37,18 @@ export function useRecommendedTodos() {
       }
 
       const data = await response.json();
-      console.log('Raw response from backend:', data);
 
-      // The response is in the format { response: Todo[] }
       if (!data?.response) {
         console.warn('Unexpected data format from backend:', data);
         setRecommendations([]);
         return;
       }
 
-      // Transform the data to match our interface
       const transformedData: RecommendedTodo[] = data.response.map((todo: { title: string }) => ({
-        id: crypto.randomUUID(), // Generate a client-side ID since the backend doesn't provide one
+        id: crypto.randomUUID(),
         title: todo.title
       }));
       
-      console.log('Transformed recommendations:', transformedData);
       setRecommendations(transformedData);
       setError(null);
     } catch (err) {
@@ -90,20 +86,14 @@ export function useRecommendedTodos() {
         throw new Error(`Failed to process thumbs ${action}`);
       }
 
-      // If thumbs up, add to todos
-      if (action === 'up') {
-        const { error: insertError } = await supabase
-          .from('todos')
-          .insert({
-            title: todo.title,
-            user_id: session.user.id
-          });
-
-        if (insertError) throw insertError;
-      }
-
       // Remove from recommendations locally
       setRecommendations(prev => prev.filter(t => t.id !== todo.id));
+
+      // Refresh tasks if thumbs up (the backend will have created the task)
+      if (action === 'up') {
+        const event = new CustomEvent('refresh-tasks');
+        window.dispatchEvent(event);
+      }
     } catch (err) {
       console.error(`Failed to process thumbs ${action}:`, err);
     }
