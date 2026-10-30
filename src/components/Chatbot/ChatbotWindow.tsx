@@ -3,6 +3,7 @@ import { X, Send } from 'lucide-react';
 import { ChatMessage as ChatMessageType } from '../../types';
 import { ChatMessage } from './ChatMessage';
 import { supabase } from '../../lib/supabase';
+import { API_BASE_URL } from '../../lib/api';
 
 interface ChatbotWindowProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export function ChatbotWindow({ isOpen, onClose }: ChatbotWindowProps) {
         throw new Error('User not authenticated');
       }
 
-      const response = await fetch('https://choice-entirely-coyote.ngrok-free.app/chatbot/', {
+      const response = await fetch(`${API_BASE_URL}/chatbot/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
