@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { API_BASE_URL } from '../lib/api';
 
 interface RecommendedTodo {
   id: string;
   title: string;
 }
-
-const API_BASE_URL = 'https://choice-entirely-coyote.ngrok-free.app';
 
 export function useRecommendedTodos() {
   const [recommendations, setRecommendations] = useState<RecommendedTodo[]>([]);
@@ -21,7 +20,7 @@ export function useRecommendedTodos() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/recommendations`, {
+      const response = await fetch(`${API_BASE_URL}/recommendations/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
